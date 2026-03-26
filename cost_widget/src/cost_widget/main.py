@@ -7,7 +7,6 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools import Logger
 from botocore.exceptions import ClientError
 
-
 logger = Logger()
 
 
@@ -59,8 +58,12 @@ def get_cost_explorer_data() -> tuple[dict, dict]:
     prev_end = cur_start
     prev_start = (cur_start - datetime.timedelta(days=1)).replace(day=1)
 
-    current = _fetch_cost(cur_start.isoformat(), cur_end.isoformat(), tag_key, tag_values)
-    previous = _fetch_cost(prev_start.isoformat(), prev_end.isoformat(), tag_key, tag_values)
+    current = _fetch_cost(
+        cur_start.isoformat(), cur_end.isoformat(), tag_key, tag_values
+    )
+    previous = _fetch_cost(
+        prev_start.isoformat(), prev_end.isoformat(), tag_key, tag_values
+    )
 
     logger.debug(f"Current period: {current}")
     logger.debug(f"Previous period: {previous}")
@@ -73,10 +76,13 @@ def gen_html_report(current: dict, previous: dict) -> str:
     groups = current["ResultsByTime"][0].get("Groups", [])
     total = sum(float(g["Metrics"]["BlendedCost"]["Amount"]) for g in groups)
 
-    prev_groups = previous["ResultsByTime"][0].get("Groups", []) if previous["ResultsByTime"] else []
+    prev_groups = (
+        previous["ResultsByTime"][0].get("Groups", [])
+        if previous["ResultsByTime"]
+        else []
+    )
     prev_by_service = {
-        g["Keys"][0]: float(g["Metrics"]["BlendedCost"]["Amount"])
-        for g in prev_groups
+        g["Keys"][0]: float(g["Metrics"]["BlendedCost"]["Amount"]) for g in prev_groups
     }
     prev_total = sum(float(g["Metrics"]["BlendedCost"]["Amount"]) for g in prev_groups)
 

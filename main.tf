@@ -1,9 +1,6 @@
 data "aws_iam_policy_document" "lambda_execution" {
   statement {
-    actions = [
-      "ce:GetCostAndUsage"
-      #"ce:GetCostAndUsage", "ce:Get*", "ce:List*"
-    ]
+    actions   = ["ce:GetCostAndUsage"]
     resources = ["*"]
   }
 }
@@ -21,19 +18,31 @@ module "widget" {
   number_of_policy_jsons        = 1
   policy_jsons                  = [data.aws_iam_policy_document.lambda_execution.json]
 
+  ignore_source_code_hash = true
+
   source_path = [
     {
       path       = "${path.module}/cost_widget/"
       uv_install = true
+      patterns = [
+        "!tests/.*",
+        "!.venv/.*",
+        "!uv.lock",
+        "!pyproject.toml",
+        "!README.md",
+      ]
     }
   ]
 
   environment_variables = {
-    POWERTOOLS_LOG_LEVEL = var.log_level
-    COST_ALLOCATION_TAG  = var.cost_allocation_tag
+    POWERTOOLS_LOG_LEVEL       = var.log_level
+    COST_ALLOCATION_TAG_KEY    = var.cost_allocation_tag_key
+    COST_ALLOCATION_TAG_VALUES = join(",", var.cost_allocation_tag_values)
+    SHOW_CURRENT_MONTH         = tostring(var.show_current_month)
   }
 
-  tags = {
-    Name = "my-lambda1"
-  }
+  tags = merge(
+    { Name = var.project_name },
+    var.tags,
+  )
 }

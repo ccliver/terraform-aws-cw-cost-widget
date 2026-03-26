@@ -4,7 +4,8 @@ import boto3
 import requests
 from moto import mock_aws
 
-os.environ["COST_ALLOCATION_TAG"] = "Project=Testing"
+os.environ["COST_ALLOCATION_TAG_KEY"] = "Project"
+os.environ["COST_ALLOCATION_TAG_VALUES"] = "Testing"
 
 
 @pytest.fixture(scope="function")
@@ -101,12 +102,7 @@ def setup_ce(ce):
                             },
                         ],
                         "TimePeriod": {"End": "2026-02-01", "Start": "2026-01-01"},
-                        "Total": {
-                            "BlendedCost": {
-                                "Amount": "3.2482370666",
-                                "Unit": "USD",
-                            }
-                        },
+                        "Total": {},
                     }
                 ],
                 "DimensionValueAttributes": [],
@@ -114,20 +110,11 @@ def setup_ce(ce):
         ]
     }
 
-    resp = requests.post(
-        "http://motoapi.amazonaws.com/moto-api/static/ce/cost-and-usage-results",
-        json=expected_results,
-    )
-    assert resp.status_code == 201
-
-    resp = requests.post(
-        "http://motoapi.amazonaws.com/moto-api/static/ce/cost-and-usage-results",
-        json=expected_results,
-    )
-    assert resp.status_code == 201
-
-    resp = requests.post(
-        "http://motoapi.amazonaws.com/moto-api/static/ce/cost-and-usage-results",
-        json=expected_results,
-    )
-    assert resp.status_code == 201
+    # Each get_cost_explorer_data() call makes 2 CE requests (current + previous period).
+    # Post 4 results to the queue to cover up to 2 test calls per fixture scope.
+    for _ in range(4):
+        resp = requests.post(
+            "http://motoapi.amazonaws.com/moto-api/static/ce/cost-and-usage-results",
+            json=expected_results,
+        )
+        assert resp.status_code == 201

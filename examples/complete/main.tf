@@ -3,8 +3,9 @@ provider "aws" {
 }
 
 module "example" {
-  source              = "../../"
-  cost_allocation_tag = "Project=k8s-lab"
+  source                     = "../../"
+  cost_allocation_tag_key    = "Project"
+  cost_allocation_tag_values = ["k8s-lab"]
 }
 
 resource "aws_cloudwatch_dashboard" "main" {
@@ -12,6 +13,6 @@ resource "aws_cloudwatch_dashboard" "main" {
 
   dashboard_body = templatefile(
     "./dashboard.tftpl",
-    { widget_arn = module.example.arn }
+    { widget_arn = module.example.lambda_function_arn }
   )
 }

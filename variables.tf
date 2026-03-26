@@ -10,7 +10,24 @@ variable "log_level" {
   default     = "INFO"
 }
 
-variable "cost_allocation_tag" {
-  description = "Cost allocation tag to filter cost data (e.g., 'Environment=Production')"
+variable "cost_allocation_tag_key" {
+  description = "Cost allocation tag key to filter cost data (e.g., 'Environment')"
   type        = string
+}
+
+variable "cost_allocation_tag_values" {
+  description = "List of cost allocation tag values to filter cost data (e.g., ['Production', 'Staging'])"
+  type        = list(string)
+}
+
+variable "show_current_month" {
+  description = "Show current month MTD costs instead of the last complete month"
+  type        = bool
+  default     = false
+}
+
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default     = {}
 }

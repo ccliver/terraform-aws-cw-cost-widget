@@ -6,27 +6,32 @@ on:
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: ghcr.io/antonbabenko/pre-commit-terraform:v1.105.0
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
       - run: |
-          git config --global --add safe.directory $GITHUB_WORKSPACE
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
 
       - name: Get changed files
         id: file_changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          export DIFF=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }})
-          echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
-          echo "files=$( echo "$DIFF" | xargs echo )" >> $GITHUB_OUTPUT
+          DIFF=$(git diff --name-only "origin/$BASE_REF" HEAD)
+          echo "Diff between $BASE_REF and HEAD"
+          echo "files=$(echo "$DIFF" | xargs echo)" >> "$GITHUB_OUTPUT"
 
       - name: fix tar dependency in alpine container image
         run: |
@@ -35,11 +40,14 @@ jobs:
           python -m pip freeze --local
 
       - name: Cache pre-commit since we use pre-commit from container
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-3|${{ hashFiles('.pre-commit-config.yaml') }}
 
       - name: Execute pre-commit
+        env:
+          FILES: ${{ steps.file_changes.outputs.files }}
         run: |
-          pre-commit run --color=always --show-diff-on-failure --files ${{ steps.file_changes.outputs.files }}
+          read -ra files <<< "$FILES"
+          pre-commit run --color=always --show-diff-on-failure --files "${files[@]}"

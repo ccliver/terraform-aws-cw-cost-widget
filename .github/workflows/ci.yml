@@ -8,8 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    container:
-      image: ghcr.io/antonbabenko/pre-commit-terraform:v1.105.0
     defaults:
       run:
         shell: bash
@@ -20,10 +18,6 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
-
       - name: Get changed files
         id: file_changes
         env:
@@ -33,17 +27,21 @@ jobs:
           echo "Diff between $BASE_REF and HEAD"
           echo "files=$(echo "$DIFF" | xargs echo)" >> "$GITHUB_OUTPUT"
 
-      - name: fix tar dependency in alpine container image
-        run: |
-          apk --no-cache add tar
-          # check python modules installed versions
-          python -m pip freeze --local
+      - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
 
-      - name: Cache pre-commit since we use pre-commit from container
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-3|${{ hashFiles('.pre-commit-config.yaml') }}
+      - uses: terraform-linters/setup-tflint@b480b8fcdaa6f2c577f8e4fa799e89e756bb7c93 # v6.2.2
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: Install terraform-docs
+        run: |
+          curl -sSLo /tmp/terraform-docs.tar.gz \
+            "https://github.com/terraform-docs/terraform-docs/releases/download/v0.22.0/terraform-docs-v0.22.0-linux-amd64.tar.gz"
+          tar -xzf /tmp/terraform-docs.tar.gz -C /tmp terraform-docs
+          sudo mv /tmp/terraform-docs /usr/local/bin/
+
+      - name: Install pre-commit
+        run: pip install pre-commit
 
       - name: Execute pre-commit
         env:

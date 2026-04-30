@@ -8,6 +8,10 @@
             "height": 11,
             "properties": {
                 "endpoint": "${widget_arn}",
+                "params": {
+                    "lookback_days": 30,
+                    "granularity": "MONTHLY"
+                },
                 "updateOn": {
                     "refresh": true,
                     "resize": true,

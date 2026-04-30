@@ -6,6 +6,8 @@ from moto import mock_aws
 
 os.environ["COST_ALLOCATION_TAG_KEY"] = "Project"
 os.environ["COST_ALLOCATION_TAG_VALUES"] = "Testing"
+os.environ["DEFAULT_LOOKBACK_DAYS"] = "30"
+os.environ["DEFAULT_GRANULARITY"] = "MONTHLY"
 
 
 @pytest.fixture(scope="function")
@@ -110,9 +112,9 @@ def setup_ce(ce):
         ]
     }
 
-    # Each get_cost_explorer_data() call makes 2 CE requests (current + previous period).
-    # Post 4 results to the queue to cover up to 2 test calls per fixture scope.
-    for _ in range(4):
+    # Each get_cost_explorer_data() call makes 1 CE request.
+    # Post 2 results to the queue to cover up to 2 test calls per fixture scope.
+    for _ in range(2):
         resp = requests.post(
             "http://motoapi.amazonaws.com/moto-api/static/ce/cost-and-usage-results",
             json=expected_results,

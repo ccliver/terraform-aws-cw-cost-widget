@@ -38,7 +38,8 @@ module "widget" {
     POWERTOOLS_LOG_LEVEL       = var.log_level
     COST_ALLOCATION_TAG_KEY    = var.cost_allocation_tag_key
     COST_ALLOCATION_TAG_VALUES = join(",", var.cost_allocation_tag_values)
-    SHOW_CURRENT_MONTH         = tostring(var.show_current_month)
+    DEFAULT_LOOKBACK_DAYS      = tostring(var.default_lookback_days)
+    DEFAULT_GRANULARITY        = var.default_granularity
   }
 
   tags = merge(

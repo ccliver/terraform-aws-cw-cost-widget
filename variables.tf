@@ -20,10 +20,26 @@ variable "cost_allocation_tag_values" {
   type        = list(string)
 }
 
-variable "show_current_month" {
-  description = "Show current month MTD costs instead of the last complete month"
-  type        = bool
-  default     = false
+variable "default_lookback_days" {
+  description = "Default lookback window in days (any positive integer). Override at runtime via widget params without redeploying."
+  type        = number
+  default     = 30
+
+  validation {
+    condition     = var.default_lookback_days > 0
+    error_message = "default_lookback_days must be a positive integer."
+  }
+}
+
+variable "default_granularity" {
+  description = "Default Cost Explorer granularity (DAILY or MONTHLY). Override at runtime via widget params without redeploying."
+  type        = string
+  default     = "MONTHLY"
+
+  validation {
+    condition     = contains(["DAILY", "MONTHLY"], var.default_granularity)
+    error_message = "default_granularity must be DAILY or MONTHLY."
+  }
 }
 
 variable "tags" {

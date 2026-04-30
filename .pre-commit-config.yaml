@@ -18,6 +18,13 @@ repos:
       - id: check-merge-conflict
       - id: end-of-file-fixer
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 6fec9b7edb08fd9989088709d864a7826dc74e80 # v0.15.12
+    hooks:
+      - id: ruff-check
+        args: [ --fix ]
+      - id: ruff-format
+
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: ea2eb407b4cbce87cf0d502f36578950494f5ac9 # v1.23.1
     hooks:

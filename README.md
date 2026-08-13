@@ -22,7 +22,7 @@ In the CloudWatch console, open the dashboard, click the widget's action menu (â
 | `lookback_days` | Number of days to look back from today | `1`, `7`, `30`, `90` (any positive integer) |
 | `granularity` | How Cost Explorer buckets the data | `"DAILY"`, `"MONTHLY"` |
 
-With `DAILY` granularity the **Cost Over Time** table shows one row per day; with `MONTHLY` it shows one row per calendar month. The defaults can also be set permanently via the `default_lookback_days` and `default_granularity` Terraform variables.
+The **Cost by Service Over Time** table breaks out cost per service per period, so a spike in a single service is visible in its own column instead of being averaged into a lookback-wide total. With `DAILY` granularity each column is a day; with `MONTHLY` each column is a calendar month. The defaults can also be set permanently via the `default_lookback_days` and `default_granularity` Terraform variables.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

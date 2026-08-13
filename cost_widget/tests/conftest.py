@@ -1,6 +1,7 @@
 import os
-import pytest
+
 import boto3
+import pytest
 import requests
 from moto import mock_aws
 

@@ -1,12 +1,13 @@
 import pytest
+
 from cost_widget.main import (
-    get_cost_explorer_data,
-    gen_html_report,
-    lambda_handler,
-    _get_lookback_days,
-    _get_granularity,
-    _aggregate_results,
+    _build_pivot,
     _format_period_label,
+    _get_granularity,
+    _get_lookback_days,
+    gen_html_report,
+    get_cost_explorer_data,
+    lambda_handler,
 )
 
 
@@ -32,8 +33,7 @@ def test_gen_html_report(setup_ce):
     assert "Amazon Elastic Compute Cloud - Compute" in html_report
     assert "Amazon Simple Storage Service" in html_report
     assert "AWS Key Management Service" in html_report
-    assert "Cost Over Time" in html_report
-    assert "Cost by Service" in html_report
+    assert "Cost by Service Over Time" in html_report
     assert "Total" in html_report
     assert "vs Prior Period" not in html_report
 
@@ -56,8 +56,7 @@ def test_lambda_handler(setup_ce):
     assert "Amazon Elastic Compute Cloud - Compute" in html_report
     assert "Amazon Simple Storage Service" in html_report
     assert "AWS Key Management Service" in html_report
-    assert "Cost Over Time" in html_report
-    assert "Cost by Service" in html_report
+    assert "Cost by Service Over Time" in html_report
     assert "Total" in html_report
     assert "AmazonCloudWatch" not in html_report
 
@@ -165,48 +164,77 @@ def test_format_period_label_monthly_jan():
     )
 
 
-# --- _aggregate_results ---
+# --- _build_pivot ---
 
 
-def test_aggregate_results_single_bucket():
-    results = [
-        {"Groups": [{"Keys": ["EC2"], "Metrics": {"BlendedCost": {"Amount": "10.0"}}}]}
-    ]
-    totals, grand = _aggregate_results(results)
-    assert totals == {"EC2": 10.0}
-    assert grand == 10.0
-
-
-def test_aggregate_results_multi_bucket():
-    bucket = {
-        "Groups": [{"Keys": ["EC2"], "Metrics": {"BlendedCost": {"Amount": "5.0"}}}]
-    }
-    totals, grand = _aggregate_results([bucket, bucket])
-    assert totals == {"EC2": 10.0}
-    assert grand == 10.0
-
-
-def test_aggregate_results_multiple_services():
+def test_build_pivot_single_bucket():
     results = [
         {
+            "TimePeriod": {"Start": "2026-04-01", "End": "2026-05-01"},
+            "Groups": [
+                {"Keys": ["EC2"], "Metrics": {"BlendedCost": {"Amount": "10.0"}}}
+            ],
+        }
+    ]
+    periods, rows, col_totals, grand = _build_pivot(results, "MONTHLY")
+    assert periods == ["Apr 2026"]
+    assert rows == [("EC2", [10.0], 10.0)]
+    assert col_totals == [10.0]
+    assert grand == 10.0
+
+
+def test_build_pivot_multi_bucket_tracks_per_period():
+    results = [
+        {
+            "TimePeriod": {"Start": "2026-04-01", "End": "2026-05-01"},
+            "Groups": [
+                {"Keys": ["EC2"], "Metrics": {"BlendedCost": {"Amount": "5.0"}}}
+            ],
+        },
+        {
+            "TimePeriod": {"Start": "2026-05-01", "End": "2026-06-01"},
+            "Groups": [
+                {"Keys": ["EC2"], "Metrics": {"BlendedCost": {"Amount": "50.0"}}}
+            ],
+        },
+    ]
+    periods, rows, col_totals, grand = _build_pivot(results, "MONTHLY")
+    assert periods == ["Apr 2026", "May 2026"]
+    assert rows == [("EC2", [5.0, 50.0], 55.0)]
+    assert col_totals == [5.0, 50.0]
+    assert grand == 55.0
+
+
+def test_build_pivot_multiple_services_sorted_by_total():
+    results = [
+        {
+            "TimePeriod": {"Start": "2026-04-01", "End": "2026-05-01"},
             "Groups": [
                 {"Keys": ["EC2"], "Metrics": {"BlendedCost": {"Amount": "3.0"}}},
                 {"Keys": ["S3"], "Metrics": {"BlendedCost": {"Amount": "1.0"}}},
-            ]
+            ],
         },
         {
+            "TimePeriod": {"Start": "2026-05-01", "End": "2026-06-01"},
             "Groups": [
                 {"Keys": ["EC2"], "Metrics": {"BlendedCost": {"Amount": "2.0"}}},
                 {"Keys": ["S3"], "Metrics": {"BlendedCost": {"Amount": "0.5"}}},
-            ]
+            ],
         },
     ]
-    totals, grand = _aggregate_results(results)
-    assert totals == {"EC2": 5.0, "S3": 1.5}
+    periods, rows, col_totals, grand = _build_pivot(results, "MONTHLY")
+    assert periods == ["Apr 2026", "May 2026"]
+    assert rows == [("EC2", [3.0, 2.0], 5.0), ("S3", [1.0, 0.5], 1.5)]
+    assert col_totals == [4.0, 2.5]
     assert grand == 6.5
 
 
-def test_aggregate_results_empty_groups():
-    totals, grand = _aggregate_results([{"Groups": []}])
-    assert totals == {}
+def test_build_pivot_empty_groups():
+    results = [
+        {"TimePeriod": {"Start": "2026-04-01", "End": "2026-05-01"}, "Groups": []}
+    ]
+    periods, rows, col_totals, grand = _build_pivot(results, "MONTHLY")
+    assert periods == ["Apr 2026"]
+    assert rows == []
+    assert col_totals == [0.0]
     assert grand == 0.0

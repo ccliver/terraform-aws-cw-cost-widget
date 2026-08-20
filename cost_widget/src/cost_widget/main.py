@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 
 import boto3
 from aws_lambda_powertools import Logger
@@ -70,6 +71,13 @@ def _build_pivot(
     )
     col_totals = [sum(row[i] for _, row, _ in rows) for i in range(len(periods))]
     return periods, rows, col_totals, sum(col_totals)
+
+
+_SERVICE_PREFIX_RE = re.compile(r"^(Amazon|AWS)\s*")
+
+
+def _clean_service_name(name: str) -> str:
+    return _SERVICE_PREFIX_RE.sub("", name, count=1) or name
 
 
 def _format_period_label(time_period: dict, granularity: str) -> str:
@@ -161,7 +169,7 @@ def gen_html_report(data: dict, granularity: str) -> str:
     html += "<th class='r'>Total</th></tr>"
 
     for svc, costs, total in rows:
-        html += f"<tr><td>{svc}</td>"
+        html += f"<tr><td>{_clean_service_name(svc)}</td>"
         for cost in costs:
             html += f"<td class='r'>${cost:.2f}</td>"
         html += f"<td class='r'>${total:.2f}</td></tr>"

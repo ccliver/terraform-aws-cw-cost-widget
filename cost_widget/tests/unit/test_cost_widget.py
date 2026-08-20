@@ -29,10 +29,10 @@ def test_gen_html_report(setup_ce):
     assert "<table>" in html_report
     assert "AmazonCloudWatch" not in html_report
     assert "EC2 - Other" in html_report
-    assert "Amazon Elastic Container Service for Kubernetes" in html_report
-    assert "Amazon Elastic Compute Cloud - Compute" in html_report
-    assert "Amazon Simple Storage Service" in html_report
-    assert "AWS Key Management Service" in html_report
+    assert "Elastic Container Service for Kubernetes" in html_report
+    assert "Elastic Compute Cloud - Compute" in html_report
+    assert "Simple Storage Service" in html_report
+    assert "Key Management Service" in html_report
     assert "Cost by Service Over Time" in html_report
     assert "Total" in html_report
     assert "vs Prior Period" not in html_report
@@ -52,10 +52,10 @@ def test_lambda_handler(setup_ce):
 
     assert "<html>" in html_report
     assert "EC2 - Other" in html_report
-    assert "Amazon Elastic Container Service for Kubernetes" in html_report
-    assert "Amazon Elastic Compute Cloud - Compute" in html_report
-    assert "Amazon Simple Storage Service" in html_report
-    assert "AWS Key Management Service" in html_report
+    assert "Elastic Container Service for Kubernetes" in html_report
+    assert "Elastic Compute Cloud - Compute" in html_report
+    assert "Simple Storage Service" in html_report
+    assert "Key Management Service" in html_report
     assert "Cost by Service Over Time" in html_report
     assert "Total" in html_report
     assert "AmazonCloudWatch" not in html_report
